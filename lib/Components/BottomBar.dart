@@ -37,7 +37,7 @@ class _BottomBarState extends State<BottomBar> {
           children: [
             _buildIcon(Icons.home, Beranda()),
             _buildIcon(Icons.star, UlasanInputPage()),
-            // _buildIcon(Icons.bar_chart, Grafik()),
+            _buildIcon(Icons.bar_chart, Grafik()),
             _buildIcon(Icons.person, LihatUlasanPage()),
           ]),
       ),

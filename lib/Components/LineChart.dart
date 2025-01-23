@@ -9,55 +9,38 @@ class LineChartWidget extends StatefulWidget {
 
 class _LineChartWidgetState extends State<LineChartWidget> {
   List<FlSpot> _spots = [];
-  List<String> _dates = [];
   bool _isLoading = true;
-  String _selectedRange = "7 Days"; // Default range
-  double _minY = 0;
-  double _maxY = 5; // Nilai default maxY (akan disesuaikan)
+  String _selectedRange = "7"; // Default range: 7 hari terakhir
+  double _minY = 1;
+  double _maxY = 5;
 
   @override
   void initState() {
     super.initState();
-    _loadChartData("7"); // Default 7 days data
+    _loadChartData(_selectedRange);
   }
 
   Future<void> _loadChartData(String range) async {
+    setState(() {
+      _isLoading = true;
+      _spots = [];
+    });
+
     try {
-      // Ambil data dari database berdasarkan rentang waktu yang dipilih
       final data = await DatabaseHelper.getAverageRatingByRange(range);
-      print("Data fetched: $data");
-
-      // Menentukan minY dan maxY berdasarkan data
-      double maxBintang = 0;
-      double minBintang = double.infinity;
-
       setState(() {
         _spots = data
             .asMap()
             .entries
             .map((entry) {
-              final index = entry.key.toDouble();
-              final averageRating = entry.value['averageRating'] as double?;
-              if (averageRating == null ||
-                  averageRating.isNaN ||
-                  averageRating.isInfinite) {
-                return null; // Abaikan data yang tidak valid
-              }
-              _dates.add(entry.value['date'].toString());
-
-              // Menghitung minY dan maxY
-              if (averageRating > maxBintang) maxBintang = averageRating;
-              if (averageRating < minBintang) minBintang = averageRating;
-
-              return FlSpot(index, averageRating);
-            })
+          final index = entry.key.toDouble();
+          final averageRating = entry.value['averageRating'] as double?;
+          if (averageRating == null || averageRating.isNaN) return null;
+          return FlSpot(index, averageRating);
+        })
             .where((spot) => spot != null)
             .cast<FlSpot>()
             .toList();
-
-        // Set nilai minY dan maxY
-        _minY = minBintang;
-        _maxY = maxBintang > 5 ? maxBintang : 5; // Menyesuaikan dengan nilai maxY yang lebih besar dari 5
         _isLoading = false;
       });
     } catch (e) {
@@ -77,91 +60,113 @@ class _LineChartWidgetState extends State<LineChartWidget> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFF11892D), // Hijau pekat
-            Color.fromRGBO(0, 132, 0, 0.459), // Hijau semi-transparan
-            Color.fromRGBO(255, 254, 254, 0.247), // Abu-abu terang transparan
+            Color(0xFF11892D),
+            Color.fromRGBO(0, 132, 0, 0.459),
+            Color.fromRGBO(255, 254, 254, 0.247),
           ],
-          stops: [0.2658, 0.7223, 1.0], // Posisi gradien
         ),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Judul grafik
           Text(
             "GRAFIK RATA-RATA ULASAN PELAYANAN",
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w400,
-              color: Color.fromARGB(255, 255, 255, 255), // Warna teks kuning terang
+              color: Colors.white,
             ),
           ),
-          SizedBox(height: 20), // Jarak antara judul dan grafik
+          SizedBox(height: 20),
           _isLoading
-              ? Center(child: CircularProgressIndicator()) // Loading
+              ? Center(child: CircularProgressIndicator())
               : _spots.isEmpty
-                  ? Center(child: Text("No valid data to display")) // Data kosong
-                  : SizedBox(
-                      height: 200, // Tinggi grafik
-                      child: LineChart(
-                        LineChartData(
-                          gridData: FlGridData(
-                            show: false,
-                          ),
-                          titlesData: FlTitlesData(
-                            bottomTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                showTitles: true,
-                                getTitlesWidget: (value, meta) {
-                                  final index = value.toInt();
-                                  if (index >= 0 && index < _dates.length) {
-                                    return Text(_dates[index]);
-                                  }
-                                  return Container();
-                                },
-                              ),
+              ? Center(child: Text("No valid data to display"))
+              : SizedBox(
+            height: 200,
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(show: false),
+                titlesData: FlTitlesData(
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 30,
+                      interval: 1,
+                      getTitlesWidget: (value, meta) {
+                        if (value >= 1 && value <= 5) {
+                          return Text(
+                            value.toInt().toString(),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
                             ),
-                            topTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                showTitles: false,
-                              ),
-                            ),
-                            leftTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                showTitles: false,
-                                getTitlesWidget: (value, meta) {
-                                  if (value == _minY || value == _maxY) {
-                                    return Text(value.toString());
-                                  }
-                                  return Container();
-                                },
-                              ),
-                            ),
-                          ),
-                          borderData: FlBorderData(show: true), // Menambahkan border
-                          minX: 0,
-                          maxX: _spots.isNotEmpty
-                              ? _spots.length.toDouble() - 1
-                              : 0,
-                          minY: _minY,
-                          maxY: _maxY,
-                          lineBarsData: [
-                            LineChartBarData(
-                              spots: _spots,
-                              isCurved: true,
-                              barWidth: 1.5,
-                              color: Color(0xFFFBD85D), // Warna garis grafik
-                              belowBarData: BarAreaData(
-                                show: false,
-                              ),
-                              dotData: FlDotData(show: false),
-                            ),
-                          ],
-                        ),
-                      ),
+                          );
+                        }
+                        return Container();
+                      },
                     ),
+                  ),
+                ),
+                borderData: FlBorderData(show: true),
+                minX: 0,
+                maxX: _spots.length.toDouble() - 1,
+                minY: _minY,
+                maxY: _maxY,
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: _spots,
+                    isCurved: false,
+                    barWidth: 1.5,
+                    color: Color(0xFFFBD85D),
+                    dotData: FlDotData(show: false),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(height: 20),
+          Wrap(
+            spacing: 8.0,
+            children: [
+              _buildRangeButton("7", "7 Hari"),
+              _buildRangeButton("30", "1 Bulan"),
+              _buildRangeButton("90", "3 Bulan"),
+              _buildRangeButton("180", "6 Bulan"),
+              _buildRangeButton("365", "1 Tahun"),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRangeButton(String range, String label) {
+    final isSelected = _selectedRange == range;
+
+    return ElevatedButton(
+      onPressed: () {
+        setState(() {
+          _selectedRange = range;
+        });
+        _loadChartData(range);
+      },
+      style: ElevatedButton.styleFrom(
+        primary: isSelected ? Colors.green : Colors.transparent,
+        onPrimary: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 9,
+        ),
       ),
     );
   }
