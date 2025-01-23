@@ -159,7 +159,8 @@ class _UlasanInputPageState extends State<UlasanInputPage> {
                   return IconButton(
                     icon: Icon(
                       Icons.star,
-                      color: _rating > index ? Colors.yellow : Colors.grey, size: 30,
+                      color: _rating > index ? Colors.yellow : Colors.grey,
+                      size: 30,
                     ),
                     onPressed: () {
                       setState(() {
@@ -231,11 +232,13 @@ class _UlasanInputPageState extends State<UlasanInputPage> {
               SizedBox(height: 20),
 
               // TextArea untuk input pesan
-              Text("Berikan pesan untuk kami :",
-              style: TextStyle(
+              Text(
+                "Berikan pesan untuk kami :",
+                style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 12,
-                    fontWeight: FontWeight.w600),),
+                    fontWeight: FontWeight.w600),
+              ),
               SizedBox(height: 10),
               TextField(
                 controller: _pesanController,
@@ -250,13 +253,10 @@ class _UlasanInputPageState extends State<UlasanInputPage> {
                     ),
                   ),
                   hintText: "Tulis pesan ulasan Anda...",
-                  hintStyle: TextStyle(
-                    fontSize: 11, 
-                    fontWeight: FontWeight.w300
-                  ),
+                  hintStyle:
+                      TextStyle(fontSize: 11, fontWeight: FontWeight.w300),
                   filled: true, // Ensure the background color is applied
-                  fillColor: Color(
-                      0x331A841A),
+                  fillColor: Color(0x331A841A),
                 ),
               ),
               SizedBox(height: 12),
@@ -265,8 +265,8 @@ class _UlasanInputPageState extends State<UlasanInputPage> {
               ElevatedButton(
                 onPressed: _saveUlasan,
                 style: ElevatedButton.styleFrom(
-                  primary: Color(0xFF1A841A), // Green button color
-                  onPrimary: Colors.white, // White text color
+                  foregroundColor: Colors.white,
+                  backgroundColor: Color(0xFF1A841A), // White text color
                   shape: RoundedRectangleBorder(
                     borderRadius:
                         BorderRadius.circular(5), // Border radius of 5px

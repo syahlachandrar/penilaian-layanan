@@ -33,36 +33,35 @@ class _LihatUlasanPageState extends State<LihatUlasanPage> {
   }
 
   void _applyFilters() {
-  setState(() {
-    _filteredUlasanList = _ulasanList.where((ulasan) {
-      bool matchesDate = _selectedDate == null ||
-          DateFormat('yyyy-MM-dd').format(ulasan.tanggalWaktu) ==
-              DateFormat('yyyy-MM-dd').format(_selectedDate!);
+    setState(() {
+      _filteredUlasanList = _ulasanList.where((ulasan) {
+        bool matchesDate = _selectedDate == null ||
+            DateFormat('yyyy-MM-dd').format(ulasan.tanggalWaktu) ==
+                DateFormat('yyyy-MM-dd').format(_selectedDate!);
 
-      bool matchesStar = _selectedStar == null ||
-          ulasan.jumlahBintang == _selectedStar;
+        bool matchesStar =
+            _selectedStar == null || ulasan.jumlahBintang == _selectedStar;
 
-      return matchesDate && matchesStar;
-    }).toList();
-  });
-}
+        return matchesDate && matchesStar;
+      }).toList();
+    });
+  }
 
 // Fungsi untuk filter berdasarkan tanggal, yang memanggil _applyFilters
-void _filterByDate(DateTime selectedDate) {
-  setState(() {
-    _selectedDate = selectedDate;
-  });
-  _applyFilters();
-}
+  void _filterByDate(DateTime selectedDate) {
+    setState(() {
+      _selectedDate = selectedDate;
+    });
+    _applyFilters();
+  }
 
 // Fungsi untuk filter berdasarkan rating, yang memanggil _applyFilters
-void _filterByStar(int star) {
-  setState(() {
-    _selectedStar = star;
-  });
-  _applyFilters();
-}
-
+  void _filterByStar(int star) {
+    setState(() {
+      _selectedStar = star;
+    });
+    _applyFilters();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,123 +74,126 @@ void _filterByStar(int star) {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-  mainAxisAlignment: MainAxisAlignment.center, // Center the children horizontally
-  crossAxisAlignment: CrossAxisAlignment.center,
-  children: [
-    // Date Picker
-    GestureDetector(
-      onTap: () async {
-        DateTime? pickedDate = await showDatePicker(
-          context: context,
-          initialDate: _selectedDate ?? DateTime.now(),
-          firstDate: DateTime(2019),
-          lastDate: DateTime.now(),
-        );
-        if (pickedDate != null && pickedDate != _selectedDate) {
-          _filterByDate(pickedDate);
-        }
-      },
-      child: Container(
-        height: 30,
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey),
-          borderRadius: BorderRadius.circular(5),
-        ),
-        padding: EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              _selectedDate != null
-                  ? "${DateFormat('dd/MM/yyyy').format(_selectedDate!)}"
-                  : "Tanggal",
-              style: TextStyle(fontSize: 10, color: Colors.black),
-            ),
-            SizedBox(width: 35),
-            Icon(Icons.calendar_today, size: 13),
-          ],
-        ),
-      ),
-    ),
-    SizedBox(width: 15),
-    
-    // Rating Dropdown
-    Container(
-      height: 30,
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey, width: 1),
-        borderRadius: BorderRadius.circular(5),
-      ),
-      child: DropdownButton<int>(
-        value: _selectedStar,
-        underline: SizedBox(), // Remove the underline
-        hint: Padding(
-          padding: const EdgeInsets.only(left: 15, right: 50),
-          child: Text(
-            _selectedStar != null ? "$_selectedStar" : "Rating",
-            style: TextStyle(fontSize: 10, color: Colors.black),
-          ),
-        ),
-        onChanged: (int? newValue) {
-          if (newValue != null) {
-            _filterByStar(newValue);
-          }
-        },
-        items: List.generate(5, (index) {
-          return DropdownMenuItem<int>(
-            value: index + 1,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Text(
-                    "${index + 1}",
-                    style: TextStyle(fontSize: 11),
+              mainAxisAlignment:
+                  MainAxisAlignment.center, // Center the children horizontally
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Date Picker
+                GestureDetector(
+                  onTap: () async {
+                    DateTime? pickedDate = await showDatePicker(
+                      context: context,
+                      initialDate: _selectedDate ?? DateTime.now(),
+                      firstDate: DateTime(2019),
+                      lastDate: DateTime.now(),
+                    );
+                    if (pickedDate != null && pickedDate != _selectedDate) {
+                      _filterByDate(pickedDate);
+                    }
+                  },
+                  child: Container(
+                    height: 30,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          _selectedDate != null
+                              ? "${DateFormat('dd/MM/yyyy').format(_selectedDate!)}"
+                              : "Tanggal",
+                          style: TextStyle(fontSize: 10, color: Colors.black),
+                        ),
+                        SizedBox(width: 35),
+                        Icon(Icons.calendar_today, size: 13),
+                      ],
+                    ),
                   ),
-                  SizedBox(width: 5),
-                  Icon(
-                    Icons.star,
-                    color: Colors.yellow,
-                    size: 13,
-                  ),
-                ],
-              ),
-            ),
-          );
-        }),
-      ),
-    ),
-    SizedBox(width: 10),
-    // Reset Button (only visible when a filter is applied)
-    if (_selectedDate != null || _selectedStar != null)
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10,vertical: 5),
-        child: ElevatedButton(
-          onPressed: () {
-            setState(() {
-              _selectedDate = null;
-              _selectedStar = null;
-              _filteredUlasanList = _ulasanList; // Reset filter
-            });
-          },
-          style: ElevatedButton.styleFrom(
-            primary: Colors.red, // Set the button color to red
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(5), // Button border radius
-            ),
-            minimumSize: Size(50, 30), 
-          ),
-          child: Text(
-            "Reset",
-            style: TextStyle(fontSize: 10, color: Colors.white),
-          ),
-        ),
-      ),
-  ],
-),
+                ),
+                SizedBox(width: 15),
 
+                // Rating Dropdown
+                Container(
+                  height: 30,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey, width: 1),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: DropdownButton<int>(
+                    value: _selectedStar,
+                    underline: SizedBox(), // Remove the underline
+                    hint: Padding(
+                      padding: const EdgeInsets.only(left: 15, right: 50),
+                      child: Text(
+                        _selectedStar != null ? "$_selectedStar" : "Rating",
+                        style: TextStyle(fontSize: 10, color: Colors.black),
+                      ),
+                    ),
+                    onChanged: (int? newValue) {
+                      if (newValue != null) {
+                        _filterByStar(newValue);
+                      }
+                    },
+                    items: List.generate(5, (index) {
+                      return DropdownMenuItem<int>(
+                        value: index + 1,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 10),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Text(
+                                "${index + 1}",
+                                style: TextStyle(fontSize: 11),
+                              ),
+                              SizedBox(width: 5),
+                              Icon(
+                                Icons.star,
+                                color: Colors.yellow,
+                                size: 13,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+                SizedBox(width: 10),
+                // Reset Button (only visible when a filter is applied)
+                if (_selectedDate != null || _selectedStar != null)
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _selectedDate = null;
+                          _selectedStar = null;
+                          _filteredUlasanList = _ulasanList; // Reset filter
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            Colors.red, // Set the button color to red
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(5), // Button border radius
+                        ),
+                        minimumSize: Size(50, 30),
+                      ),
+                      child: Text(
+                        "Reset",
+                        style: TextStyle(fontSize: 10, color: Colors.white),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
             SizedBox(height: 5),
             Expanded(
               child: _filteredUlasanList.isEmpty
@@ -209,7 +211,8 @@ void _filterByStar(int star) {
                           margin: EdgeInsets.symmetric(vertical: 5),
                           elevation: 1,
                           child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 5, horizontal: 8),
+                            padding: EdgeInsets.symmetric(
+                                vertical: 5, horizontal: 8),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [

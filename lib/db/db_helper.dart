@@ -10,7 +10,7 @@ class DatabaseHelper {
       join(await sql.getDatabasesPath(), 'unik.db'),
       version: 1,
       onCreate: (database, version) async {
-        await database.execute(''' 
+        await database.execute('''
         CREATE TABLE ulasan (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           tanggal_waktu TEXT NOT NULL,
@@ -68,7 +68,8 @@ class DatabaseHelper {
   // Fungsi untuk menghitung rata-rata jumlah bintang
   static Future<double> averageUlasan() async {
     final db = await DatabaseHelper.db();
-    final result = await db.rawQuery('SELECT AVG(jumlah_bintang) as avgRating FROM ulasan');
+    final result = await db
+        .rawQuery('SELECT AVG(jumlah_bintang) as avgRating FROM ulasan');
     return result.first['avgRating'] != null
         ? result.first['avgRating'] as double
         : 0.0;
@@ -100,7 +101,8 @@ class DatabaseHelper {
   }
 
   // Fungsi untuk mendapatkan rata-rata ulasan dalam rentang waktu tertentu
-  static Future<List<Map<String, dynamic>>> getAverageRatingByRange(String range) async {
+  static Future<List<Map<String, dynamic>>> getAverageRatingByRange(
+      String range) async {
     final db = await DatabaseHelper.db();
     final result = await db.rawQuery('''
       SELECT 
@@ -113,8 +115,31 @@ class DatabaseHelper {
     ''');
     return result;
   }
-}
 
+  static Future<Map<String, dynamic>> getRatingDistribution() async {
+    final db = await DatabaseHelper.db();
+    final result = await db.rawQuery('''
+    SELECT 
+      COUNT(*) as totalReviews,
+      SUM(CASE WHEN jumlah_bintang = 5 THEN 1 ELSE 0 END) as fiveStars,
+      SUM(CASE WHEN jumlah_bintang = 4 THEN 1 ELSE 0 END) as fourStars,
+      SUM(CASE WHEN jumlah_bintang = 3 THEN 1 ELSE 0 END) as threeStars,
+      SUM(CASE WHEN jumlah_bintang = 2 THEN 1 ELSE 0 END) as twoStars,
+      SUM(CASE WHEN jumlah_bintang = 1 THEN 1 ELSE 0 END) as oneStar
+    FROM ulasan
+  ''');
+    return result.isNotEmpty
+        ? result.first.map((key, value) => MapEntry(key, value as int))
+        : {
+            'totalReviews': 0,
+            'fiveStars': 0,
+            'fourStars': 0,
+            'threeStars': 0,
+            'twoStars': 0,
+            'oneStar': 0
+          };
+  }
+}
 
 // import 'dart:async';
 // import 'package:sqflite/sqflite.dart' as sql;
