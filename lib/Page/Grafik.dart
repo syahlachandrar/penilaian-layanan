@@ -1,4 +1,4 @@
-import 'package:fl_chart/fl_chart.dart';
+import 'package:fl_chart/fl_chart.dart'; 
 import 'package:flutter/material.dart';
 import 'package:unik/Components/BottomBar.dart';
 import 'package:unik/Components/Header.dart';
@@ -15,8 +15,10 @@ class Grafik extends StatefulWidget {
 class _GrafikState extends State<Grafik> {
   List<FlSpot> lineChartData = [];
   Map<int, double> ratingDistribution = {};
+  Map<double, DateTime> dateMap = {};
   int totalReviews = 0;
   bool isLoading = true;
+  List<PieChartSectionData> pieChartData = [];
 
   @override
   void initState() {
@@ -32,74 +34,91 @@ class _GrafikState extends State<Grafik> {
     try {
       // Fetch line chart data
       final avgRatingsByDate = await DatabaseHelper.getAverageRatingByDate();
-      lineChartData = avgRatingsByDate
-          .asMap()
-          .entries
-          .map((entry) => FlSpot(
-                entry.key.toDouble(),
-                entry.value['averageRating'] as double,
-              ))
-          .toList();
+      Map<double, DateTime> tempDateMap = {};
+      lineChartData = avgRatingsByDate.asMap().entries.map((entry) {
+        double x = entry.key.toDouble();
+        double y = (entry.value['averageRating'] as num).toDouble();
+        DateTime date = DateTime.parse(entry.value['date']);
+        tempDateMap[x] = date;
+        return FlSpot(x, y);
+      }).toList();
+      dateMap = tempDateMap;
 
       // Fetch rating distribution data
       final ratingData = await DatabaseHelper.getRatingDistribution();
-      totalReviews = ratingData['totalReviews'] ?? 0;
-      ratingDistribution = {
-        5: (ratingData['fiveStars'] ?? 0) / totalReviews,
-        4: (ratingData['fourStars'] ?? 0) / totalReviews,
-        3: (ratingData['threeStars'] ?? 0) / totalReviews,
-        2: (ratingData['twoStars'] ?? 0) / totalReviews,
-        1: (ratingData['oneStar'] ?? 0) / totalReviews,
-      };
+      totalReviews = (ratingData['totalReviews'] ?? 0) as int;
+
+      if (totalReviews > 0) {
+        ratingDistribution = {
+          5: ((ratingData['fiveStars'] ?? 0) as int) / totalReviews,
+          4: ((ratingData['fourStars'] ?? 0) as int) / totalReviews,
+          3: ((ratingData['threeStars'] ?? 0) as int) / totalReviews,
+          2: ((ratingData['twoStars'] ?? 0) as int) / totalReviews,
+          1: ((ratingData['oneStar'] ?? 0) as int) / totalReviews,
+        };
+      } else {
+        ratingDistribution = {5: 0, 4: 0, 3: 0, 2: 0, 1: 0};
+      }
+
+      // Fetch data untuk Pie Chart
+      List<PieChartSectionData> tempPieChartData = await generatePieChartData();
+
+      // Update state dengan data yang telah diambil
+      setState(() {
+        pieChartData = tempPieChartData;
+        isLoading = false;
+      });
     } catch (e) {
       print("Error loading data: $e");
-    } finally {
       setState(() {
         isLoading = false;
       });
     }
   }
 
+  Future<List<PieChartSectionData>> generatePieChartData() async {
+  final Map<String, int> penilaianCountsMap = await DatabaseHelper.getPenilaianCounts();
+  
+  print("Penilaian Counts: $penilaianCountsMap");
+
+  if (penilaianCountsMap.isEmpty) return [];
+
+  // Konversi Map ke List<Map<String, dynamic>>
+  List<Map<String, dynamic>> penilaianCounts = penilaianCountsMap.entries.map((entry) {
+    return {"penilaian": entry.key, "count": entry.value};
+  }).toList();
+
+  int total = penilaianCounts.fold(0, (sum, item) => sum + (item['count'] as int));
+  total = total == 0 ? 1 : total; // Mencegah pembagian dengan nol
+
+  Map<String, Color> kategoriWarna = {
+    'Kompetensi Petugas': Colors.red,
+    'Sarana Prasarana': Colors.blue,
+    'Kualitas Pelayanan': Colors.yellow,
+    'Sikap Petugas': Colors.green,
+    'Waktu Pelayanan': Colors.purple,
+  };
+
+  return penilaianCounts.map((item) {
+    String kategori = item['penilaian'].toString();
+    int count = item['count'] as int;
+    double percentage = (count / total) * 100;
+
+    print("Kategori: $kategori, Count: $count, Warna: ${kategoriWarna[kategori]}");
+
+    return PieChartSectionData(
+      color: kategoriWarna[kategori] ?? Colors.grey,
+      value: percentage,
+      title: '${percentage.toStringAsFixed(1)}%',
+      radius: 60,
+      titleStyle: const TextStyle(color: Colors.white, fontSize: 10),
+    );
+  }).toList();
+}
+
+
   @override
   Widget build(BuildContext context) {
-    final pieChartData = [
-      PieChartSectionData(
-        color: Colors.red,
-        value: 30, // Example data
-        title: '30%',
-        radius: 50,
-        titleStyle: TextStyle(color: Colors.white, fontSize: 14),
-      ),
-      PieChartSectionData(
-        color: Colors.blue,
-        value: 25,
-        title: '25%',
-        radius: 50,
-        titleStyle: TextStyle(color: Colors.white, fontSize: 14),
-      ),
-      PieChartSectionData(
-        color: Colors.yellow,
-        value: 20,
-        title: '20%',
-        radius: 50,
-        titleStyle: TextStyle(color: Colors.black, fontSize: 14),
-      ),
-      PieChartSectionData(
-        color: Colors.green,
-        value: 15,
-        title: '15%',
-        radius: 50,
-        titleStyle: TextStyle(color: Colors.white, fontSize: 14),
-      ),
-      PieChartSectionData(
-        color: Colors.purple,
-        value: 10,
-        title: '10%',
-        radius: 50,
-        titleStyle: TextStyle(color: Colors.white, fontSize: 14),
-      ),
-    ];
-
     return Scaffold(
       backgroundColor: Color(0xFFFFFFFF),
       appBar: Header(title: 'STATISTIK ULASAN PELAYANAN'),
@@ -110,7 +129,7 @@ class _GrafikState extends State<Grafik> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    LineChartWidget(data: lineChartData),
+                    LineChartWidget(data: lineChartData, dateMap: dateMap),
                     const SizedBox(height: 20),
                     RatingDistributionWidget(
                       totalReviews: totalReviews,

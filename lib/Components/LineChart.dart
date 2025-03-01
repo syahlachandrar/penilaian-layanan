@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 
 class LineChartWidget extends StatelessWidget {
   final List<FlSpot> data;
+  final Map<double, DateTime> dateMap;
 
-  const LineChartWidget({required this.data, Key? key}) : super(key: key);
+  const LineChartWidget({required this.data, required this.dateMap, Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -35,12 +36,12 @@ class LineChartWidget extends StatelessWidget {
           Text(
             "GRAFIK RATA-RATA ULASAN PELAYANAN",
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 15),
           data.isEmpty
               ? Center(
                   child: Text(
@@ -52,46 +53,65 @@ class LineChartWidget extends StatelessWidget {
                   height: 200,
                   child: LineChart(
                     LineChartData(
-                      gridData: FlGridData(show: false),
-                      titlesData: FlTitlesData(
-                        bottomTitles: AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
-                        ),
-                        leftTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 30,
-                            interval: 1,
-                            getTitlesWidget: (value, meta) {
-                              if (value >= minY && value <= maxY) {
-                                return Text(
-                                  value.toInt().toString(),
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                  ),
-                                );
-                              }
-                              return Container();
-                            },
+                        gridData: FlGridData(show: false),
+                        titlesData: FlTitlesData(
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          topTitles: AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: false,
+                              reservedSize: 25,
+                              interval: 1,
+                              getTitlesWidget: (value, meta) {
+                                if (value >= minY && value <= maxY) {
+                                  return Text(
+                                    value.toInt().toString(),
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                    ),
+                                  );
+                                }
+                                return Container();
+                              },
+                            ),
                           ),
                         ),
-                      ),
-                      borderData: FlBorderData(show: true),
-                      minX: 0,
-                      maxX: data.length.toDouble() - 1,
-                      minY: minY,
-                      maxY: maxY,
-                      lineBarsData: [
-                        LineChartBarData(
-                          spots: data,
-                          isCurved: true,
-                          barWidth: 2,
-                          color: Color(0xFFFBD85D),
-                          dotData: FlDotData(show: false),
+                        borderData: FlBorderData(show: false),
+                        minX: 0,
+                        maxX: data.length.toDouble() - 1,
+                        minY: minY,
+                        maxY: maxY,
+                        lineBarsData: [
+                          LineChartBarData(
+                            spots: data,
+                            isCurved: true,
+                            barWidth: 2,
+                            color: Color(0xFFFBD85D),
+                            dotData: FlDotData(show: false),
+                          ),
+                        ],
+                        lineTouchData: LineTouchData(
+                          touchTooltipData: LineTouchTooltipData(
+                              tooltipBgColor: Color.fromARGB(199, 0, 0, 0),
+                              getTooltipItems: (List<LineBarSpot> TouchedSpot) {
+                                return TouchedSpot.map((spot) {
+                                  DateTime date = dateMap[spot.x] ?? DateTime.now();
+                                  String formattedDate =
+                                      "${date.day}-${date.month}-${date.year}";
+
+                                  return LineTooltipItem(
+                                    "Tanggal: $formattedDate\nRata-rata: ${spot.y}",
+                                    TextStyle(color: Colors.white, fontSize: 9),
+                                  );
+                                }).toList();
+                              }),
+                        )
                         ),
-                      ],
-                    ),
                   ),
                 ),
         ],
